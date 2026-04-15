@@ -1,0 +1,14 @@
+# Dependency folders
+node_modules/
+
+# Environment files (Very Important)
+.env
+server/config/.env
+
+# Build folders
+dist/
+build/
+
+# Logs and OS files
+npm-debug.log*
+.DS_Store
