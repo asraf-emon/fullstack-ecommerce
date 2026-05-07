@@ -1,21 +1,13 @@
 import pkg from "pg";
+import dotenv from "dotenv";
+import path from "path";
 
-const { Client } = pkg;
+dotenv.config({ path: "config/config.env" });
 
-const database = new Client({
-  user: "postgres",
-  host: "localhost",
-  database: "mern_ecommerce_store",
-  password: "1234",
-  port: 5432,
+const { Pool } = pkg;
+
+const database = new Pool({
+  connectionString: String(process.env.DATABASE_URL),
 });
-
-try {
-  await database.connect();
-  console.log("Connected to the database successfully.");
-} catch (error) {
-  console.error("Database connection failed:", error);
-  process.exit(1);
-}
 
 export default database;

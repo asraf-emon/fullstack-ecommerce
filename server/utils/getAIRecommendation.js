@@ -30,42 +30,30 @@ export async function getAIRecommendation(req, res, userPrompt, products) {
 
     const data = await response.json();
 
+    // সরাসরি res.status না লিখে এরর থ্রো করুন
     if (data.error) {
-      console.error("Gemini Error:", data.error.message);
-      res.status(data.error.code === 429 ? 429 : 500).json({
-        success: false,
-        message:
-          data.error.code === 429
-            ? "API Limit reached. Wait 1 min."
-            : data.error.message,
-      });
-      return;
+      console.error("Gemini API Error:", data.error.message);
+      throw new Error(data.error.message);
     }
 
     const aiResponseText =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "[]";
     const cleanedText = aiResponseText.replace(/```json|```/g, "").trim();
 
     if (!cleanedText) {
-      res.status(500).json({ success: false, message: "Empty AI response." });
-      return;
+      throw new Error("Empty AI response.");
     }
 
-    try {
-      const matchedIds = JSON.parse(cleanedText);
+    const matchedIds = JSON.parse(cleanedText);
 
-      const finalProducts = products.filter(
-        (p) => matchedIds.includes(p.id) || matchedIds.includes(p._id),
-      );
-      return { success: true, products: finalProducts };
-    } catch (e) {
-      res
-        .status(500)
-        .json({ success: false, message: "Invalid JSON from AI." });
-      return;
-    }
+    const finalProducts = products.filter(
+      (p) => matchedIds.includes(p.id) || matchedIds.includes(p._id),
+    );
+
+    return { success: true, products: finalProducts };
   } catch (error) {
-    res.status(500).json({ success: false, message: "AI helper error." });
-    return;
+    // এখানে আমরা কোনো res.json পাঠাবো না, শুধু এররটি মেইন কন্ট্রোলারে পাস করে দেবো
+    console.error("AI Helper Error Log:", error.message);
+    throw error;
   }
 }

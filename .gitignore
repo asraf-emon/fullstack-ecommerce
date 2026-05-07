@@ -1,14 +1,22 @@
-# Dependency folders
+# Dependency folders 
 node_modules/
+client/node_modules/
+server/node_modules/
+dashboard/node_modules/
 
-# Environment files (Very Important)
+# Environment files (To Protect Neon DB & Cloudinary)
 .env
-server/config/.env
+*.env
+server/config/*.env
+server/config/config.env
 
 # Build folders
 dist/
 build/
+client/dist/
+dashboard/dist/
 
 # Logs and OS files
 npm-debug.log*
 .DS_Store
+.vscode/

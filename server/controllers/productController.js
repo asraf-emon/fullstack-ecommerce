@@ -75,7 +75,7 @@ export const createProduct = catchAsyncError(async (req, res, next) => {
 export const fetchAllProducts = catchAsyncError(async (req, res, next) => {
   const { availability, price, category, ratings, search } = req.query;
   const page = parseInt(req.query.page) || 1;
-  const limit = 10;
+  const limit = 12;
   const offset = (page - 1) * limit;
 
   const conditions = [];
@@ -500,6 +500,7 @@ export const fetchAIFilteredProducts = catchAsyncError(
 
     const keywords = filterKeywords(userPrompt);
 
+    // ১. ডাটাবেস থেকে প্রাথমিক সার্চ রেজাল্ট আনা
     const result = await database.query(
       `SELECT * FROM products 
        WHERE name ILIKE ANY($1) 
@@ -517,19 +518,33 @@ export const fetchAIFilteredProducts = catchAsyncError(
         .json({ success: true, message: "No matches found.", products: [] });
     }
 
-    const aiData = await getAIRecommendation(
-      req,
-      res,
-      userPrompt,
-      filteredProducts,
-    );
+    // ২. AI কল করার সময় এরর হ্যান্ডেল করা (মেইন ফিক্স)
+    try {
+      const aiData = await getAIRecommendation(
+        req,
+        res,
+        userPrompt,
+        filteredProducts,
+      );
 
-    if (!aiData) return;
+      // AI সফল হলে রেজাল্ট পাঠানো
+      if (aiData && aiData.products) {
+        return res.status(200).json({
+          success: true,
+          message: "AI search results ready.",
+          products: aiData.products,
+        });
+      }
+    } catch (error) {
+      // ৩. Gemini বিজি থাকলে বা এরর দিলে এই ব্লকটি কাজ করবে
+      console.error("AI Error Handled:", error.message);
 
-    return res.status(200).json({
-      success: true,
-      message: "AI search results ready.",
-      products: aiData.products,
-    });
+      // ইউজারকে খালি স্ক্রিন না দেখিয়ে ডাটাবেসের ডাটাই পাঠিয়ে দেওয়া
+      return res.status(200).json({
+        success: true,
+        message: "AI is busy. Showing basic search results.",
+        products: filteredProducts,
+      });
+    }
   },
 );

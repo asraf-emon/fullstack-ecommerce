@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  /* আগের ইউজারের সব কাস্টম গ্রেডিয়েন্ট */
+  --background-image-dark-gradient: linear-gradient(195deg, #42424a, #191919);
+  --background-image-red-gradient: linear-gradient(195deg, #e25656, #ff0000);
+  --background-image-blue-gradient: linear-gradient(195deg, #6fc7ce, #004cff);
+
+  /* Ubuntu ফন্ট ভেরিয়েবল */
+  --font-ubuntu: "Ubuntu", sans-serif;
+
+  /* আগের ইউজারের কালার ম্যাপিং */
+  --color-onyx: #1c1c1c;
+}
+
+@layer base {
+  * {
+    font-family: var(--font-ubuntu);
+    font-style: normal;
+    box-sizing: border-box;
+  }
+
+  #root {
+    background-color: #f3f3f6; /* অরিজিনাল কালার কোড */
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+/* আগের ইউজারের স্ক্রলবার হাইড ইউটিলিটি */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Recharts ফোকাস আউটলাইন ফিক্স */
+.recharts-wrapper .recharts-surface:focus,
+.recharts-wrapper .recharts-surface:hover {
+  outline: none !important;
+}

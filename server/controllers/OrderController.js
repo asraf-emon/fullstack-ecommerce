@@ -87,7 +87,7 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
   });
 
   const tax_price = 0.18;
-  const shipping_price = total_price >= 50 ? 0 : 2;
+  const shipping_price = total_price >= 100 ? 0 : 2;
   total_price = Math.round(
     total_price + total_price * tax_price + shipping_price,
   );
@@ -125,6 +125,7 @@ export const placeNewOrder = catchAsyncError(async (req, res, next) => {
     success: true,
     message: "Order placed successfully. Please proceed to payment.",
     paymentIntent: paymentResponse.clientSecret,
+    orderId,
     total_price,
   });
 });
@@ -215,5 +216,32 @@ export const deleteOrder = async (req, res, next) => {
     success: true,
     message: "Order deleted.",
     order: results.rows[0],
+  });
+};
+
+export const updateOrderToPaid = async (req, res, next) => {
+  const { orderId } = req.params;
+
+  // ১. অর্ডারটি চেক করা
+  const results = await database.query(`SELECT * FROM orders WHERE id = $1`, [
+    orderId,
+  ]);
+  if (results.rows.length === 0) {
+    return next(new ErrorHandler("Invalid order ID.", 404));
+  }
+
+  // ২. order_status এর সাথে paid_at ও আপডেট করা
+  const updatedOrder = await database.query(
+    `UPDATE orders 
+     SET order_status = 'Processing', 
+         paid_at = CURRENT_TIMESTAMP 
+     WHERE id = $1 RETURNING *`,
+    [orderId],
+  );
+
+  res.status(200).json({
+    success: true,
+    message: "Order marked as Paid.",
+    updatedOrder: updatedOrder.rows[0],
   });
 };

@@ -11,6 +11,9 @@ import adminRouter from "./router/adminRoutes.js";
 import Stripe from "stripe";
 import database from "./database/db.js";
 import orderRouter from "./router/orderRoutes.js";
+import contactRouter from "./router/contactRoutes.js";
+import jobRouter from "./router/jobRoutes.js";
+import blogRouter from "./router/blogRoutes.js";
 
 const app = express();
 
@@ -24,7 +27,7 @@ app.use(
   }),
 );
 
-// Stripe webhook implementing
+// Stripe Webhook
 app.post(
   "/api/v1/payment/webhook",
   express.raw({ type: "application/json" }),
@@ -41,11 +44,9 @@ app.post(
       return res.status(400).send(`Webhook Error: ${error.message || error}`);
     }
 
-    // Handling the event
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent_client_secret = event.data.object.client_secret;
       try {
-        // Finding and Updating payment
         const updatedPaymentStatus = "Paid";
         const paymentTableUpdateResult = await database.query(
           `UPDATE payments SET payment_status = $1 WHERE payment_intent_id = $2 RETURNING *`,
@@ -57,14 +58,12 @@ app.post(
           [paymentTableUpdateResult.rows[0].order_id],
         );
 
-        // Reduce stock for each product
         const orderId = paymentTableUpdateResult.rows[0].order_id;
         const { rows: orderedItems } = await database.query(
           `SELECT product_id, quantity FROM order_items WHERE order_id = $1`,
           [orderId],
         );
 
-        // For each ordered item, reduce the product stock
         for (const item of orderedItems) {
           await database.query(
             `UPDATE products SET stock = stock - $1 WHERE id = $2`,
@@ -98,6 +97,9 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/contact", contactRouter);
+app.use("/api/v1/jobs", jobRouter);
+app.use("/api/v1/blogs", blogRouter);
 
 createTables();
 

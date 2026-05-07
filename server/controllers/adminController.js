@@ -109,18 +109,32 @@ export const dashboardStats = catchAsyncError(async (req, res, next) => {
   const yesterdayRevenue = parseFloat(yesterdayRevenueQuery.rows[0].sum) || 0;
 
   //Monthly Sales For Line Chart
+  // const monthlySalesQuery = await database.query(`
+  //       SELECT
+  //       TO_CHAR(created_at, 'Mon YYYY') AS month,
+  //       DATE_TRUNC('month', created_at) as date,
+  //       SUM(total_price) as totalSales
+  //       FROM orders
+  //       GROUP BY month, date
+  //       ORDER BY date ASC
+  //   `);
+
+  // const monthlySales = monthlySalesQuery.rows.map((row) => ({
+  //   month: row.month,
+  //   totalSales: parseFloat(row.totalSales) || 0,
+  // }));
+
   const monthlySalesQuery = await database.query(`
-        SELECT
-        TO_CHAR(created_at, 'Mon YYYY') AS month,
-        DATE_TRUNC('month', created_at) as date,
-        SUM(total_price) as totalSales
-        FROM orders
-        GROUP BY month, date
-        ORDER BY date ASC
-    `);
+    SELECT 
+        TO_CHAR(DATE_TRUNC('month', created_at), 'Mon YYYY') AS month,
+        SUM(total_price) AS "totalSales"
+    FROM orders
+    GROUP BY DATE_TRUNC('month', created_at)
+    ORDER BY DATE_TRUNC('month', created_at) ASC
+`);
 
   const monthlySales = monthlySalesQuery.rows.map((row) => ({
-    month: row.month,
+    month: row.month.trim(), // বাড়তি স্পেস থাকলে কেটে দেবে
     totalSales: parseFloat(row.totalSales) || 0,
   }));
 
@@ -183,6 +197,20 @@ export const dashboardStats = catchAsyncError(async (req, res, next) => {
   );
   const newUsersThisMonth = parseInt(newUsersThisMonthQuery.rows[0].count) || 0;
 
+  // Contact Messages
+  const totalMessagesQuery = await database.query(
+    `SELECT COUNT(*) FROM contacts`,
+  );
+  const totalMessagesCount = parseInt(totalMessagesQuery.rows[0].count) || 0;
+
+  const latestMessagesQuery = await database.query(`
+    SELECT id, name, subject, created_at 
+    FROM contacts 
+    ORDER BY created_at DESC 
+    LIMIT 5
+  `);
+  const latestMessages = latestMessagesQuery.rows;
+
   // FINAL RESPONSE
   res.status(200).json({
     success: true,
@@ -198,5 +226,7 @@ export const dashboardStats = catchAsyncError(async (req, res, next) => {
     lowStockProducts,
     revenueGrowth,
     newUsersThisMonth,
+    totalMessagesCount,
+    latestMessages,
   });
 });
