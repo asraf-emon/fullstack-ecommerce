@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { Country, State, City } from "country-state-city";
-import PaymentForm from "../components/PaymentForm";
+import PaymentForm from "../components/paymentForm";
 import { placeOrder } from "../store/slices/orderSlice";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_FRONTEND_KEY);
